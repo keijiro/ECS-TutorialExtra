@@ -4,26 +4,27 @@ using System.Linq;
 
 sealed class RandomArray : MonoBehaviour
 {
+    [Space]
     [field:SerializeField] public GameObject Prefab = null;
+    [Space]
     [field:SerializeField] public Color[] Palette = null;
     [field:SerializeField] public float LowAlpha = 0.5f;
+    [field:SerializeField] public float GapProbability = 0.3f;
+    [Space]
     [field:SerializeField] public int ColumnCount = 3;
     [field:SerializeField] public int RowCount = 10;
+    [Space]
     [field:SerializeField] public float CellHeight = 0.2f;
     [field:SerializeField] public Vector2 Interval = new Vector2(1, 0.02f);
+    [Space]
     [field:SerializeField] public int Seed = 123;
+    [Space]
     [field:SerializeField] public float Delay = 0.5f;
-    [field:SerializeField] public float GapProbability = 0.3f;
 
     List<GameObject>[] _cellTable;
 
-    async void Start()
+    void BuildChart()
     {
-        Random.InitState(Seed);
-
-        _cellTable = Enumerable.Range(0, Palette.Length)
-                     .Select(x => new List<GameObject>()).ToArray();
-
         for (var col = 0; col < ColumnCount; col++)
         {
             var row = 0;
@@ -59,6 +60,16 @@ sealed class RandomArray : MonoBehaviour
                 _cellTable[idx].Add(cell);
             }
         }
+    }
+
+    async void Start()
+    {
+        Random.InitState(Seed);
+
+        _cellTable = Enumerable.Range(0, Palette.Length)
+                     .Select(x => new List<GameObject>()).ToArray();
+
+        BuildChart();
 
         var deltaAlpha = (1 - LowAlpha) / (Delay * 0.2f);
 
