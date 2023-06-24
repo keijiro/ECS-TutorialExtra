@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Klak.Math;
 
-sealed class RandomArray : MonoBehaviour
+sealed class Chart : MonoBehaviour
 {
     [Space]
     [field:SerializeField] public GameObject Prefab = null;
