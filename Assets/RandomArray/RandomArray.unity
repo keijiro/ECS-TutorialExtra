@@ -362,14 +362,14 @@ MonoBehaviour:
   - {r: 0.15633422, g: 1, b: 0.52879834, a: 1}
   - {r: 1, g: 0.13746631, b: 0.51025623, a: 1}
   - {r: 0.16470587, g: 0.6939787, b: 1, a: 1}
-  LowAlpha: 0.5
+  LowAlpha: 0.3
+  GapProbability: 0.3
   ColumnCount: 4
   RowCount: 15
   CellHeight: 0.2
   Interval: {x: 0.5, y: 0.02}
   Seed: 975
   Delay: 0.1
-  GapProbability: 0.3
 --- !u!1001 &1283894496
 PrefabInstance:
   m_ObjectHideFlags: 0

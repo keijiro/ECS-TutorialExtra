@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 
 sealed class RandomArray : MonoBehaviour
 {
@@ -21,43 +20,72 @@ sealed class RandomArray : MonoBehaviour
     [Space]
     [field:SerializeField] public float Delay = 0.5f;
 
-    List<GameObject>[] _cellTable;
+    List<GameObject> _cells = new List<GameObject>();
 
     void BuildChart()
     {
         for (var col = 0; col < ColumnCount; col++)
         {
             var row = 0;
-            var prevIsGap = false;
+            var skip = false;
 
             while (row < RowCount)
             {
-                var idx = Random.Range(0, Palette.Length);
-                idx = Mathf.Min(RowCount - row - 1, idx);
+                var cidx = Random.Range(0, Palette.Length);
+                cidx = Mathf.Min(cidx, RowCount - row - 1);
 
-                var h = idx + 1;
+                var h = cidx + 1;
                 var x = col * (1 + Interval.x);
                 var y = CellHeight * (row + 0.5f * h) + 0.5f * Interval.y;
                 var s = CellHeight * h - Interval.y;
 
                 row += h;
 
-                if (prevIsGap)
-                {
-                    prevIsGap = false;
-                }
-                else if (Random.value < GapProbability)
-                {
-                    prevIsGap = true;
-                    continue;
-                }
+                skip = !skip && Random.value < GapProbability;
+                if (skip) continue;
 
-                var cell = Instantiate(Prefab, new Vector3(x, -y, 0), Quaternion.identity);
+                var cell = Instantiate(Prefab);
+                cell.transform.localPosition = new Vector3(x, -y, 0);
                 cell.transform.localScale = new Vector3(1, s, 1);
 
-                cell.GetComponent<MeshRenderer>().material.color = Palette[idx] * LowAlpha;
+                var color = Palette[cidx];
+                color.a = LowAlpha;
+                cell.GetComponent<MeshRenderer>().material.color = color;
 
-                _cellTable[idx].Add(cell);
+                _cells.Add(cell);
+            }
+        }
+
+        for (var i = _cells.Count - 1; i > 0; i--)
+        {
+            var j = Random.Range(0, i);
+            (_cells[i], _cells[j]) = (_cells[j], _cells[i]);
+        }
+    }
+
+    async Awaitable RunScanAnimationAsync()
+    {
+        var deltaAlpha = (1 - LowAlpha) / (Delay * 0.2f);
+
+        foreach (var cell in _cells)
+        {
+            var m = cell.GetComponent<MeshRenderer>().material;
+            var color = m.color;
+
+            while (color.a < 1)
+            {
+                color.a = Mathf.Min(1, color.a + deltaAlpha * Time.deltaTime);
+                m.color = color;
+                await Awaitable.NextFrameAsync();
+            }
+
+            await Awaitable.WaitForSecondsAsync(Delay);
+
+            while (color.a > LowAlpha)
+            {
+                color.a = Mathf.Max(LowAlpha, color.a - deltaAlpha * Time.deltaTime);
+                m.color = color;
+                await Awaitable.NextFrameAsync();
             }
         }
     }
@@ -65,38 +93,7 @@ sealed class RandomArray : MonoBehaviour
     async void Start()
     {
         Random.InitState(Seed);
-
-        _cellTable = Enumerable.Range(0, Palette.Length)
-                     .Select(x => new List<GameObject>()).ToArray();
-
         BuildChart();
-
-        var deltaAlpha = (1 - LowAlpha) / (Delay * 0.2f);
-
-        for (var idx = 0; idx < Palette.Length; idx++)
-        {
-            var cells = _cellTable[idx];
-            foreach (var cell in cells)
-            {
-                var m = cell.GetComponent<MeshRenderer>().material;
-
-                var alpha = LowAlpha;
-                while (alpha < 1)
-                {
-                    alpha = Mathf.Min(1, alpha + deltaAlpha * Time.deltaTime);
-                    m.color = Palette[idx] * alpha;
-                    await Awaitable.NextFrameAsync();
-                }
-
-                await Awaitable.WaitForSecondsAsync(Delay);
-
-                while (alpha > LowAlpha)
-                {
-                    alpha = Mathf.Max(LowAlpha, alpha - deltaAlpha * Time.deltaTime);
-                    m.color = Palette[idx] * alpha;
-                    await Awaitable.NextFrameAsync();
-                }
-            }
-        }
+        await RunScanAnimationAsync();
     }
 }
