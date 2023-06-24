@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Klak.Math;
 
 sealed class RandomArray : MonoBehaviour
 {
     [Space]
     [field:SerializeField] public GameObject Prefab = null;
+    [field:SerializeField] public Transform Cursor = null;
     [Space]
     [field:SerializeField] public Color[] Palette = null;
     [field:SerializeField] public float LowAlpha = 0.5f;
@@ -18,7 +20,9 @@ sealed class RandomArray : MonoBehaviour
     [Space]
     [field:SerializeField] public int Seed = 123;
     [Space]
-    [field:SerializeField] public float Delay = 0.5f;
+    [field:SerializeField] public float CursorSpeed = 20;
+    [field:SerializeField] public float ColorDelay = 0.1f;
+    [field:SerializeField] public float ScanDelay = 0.3f;
 
     List<GameObject> _cells = new List<GameObject>();
 
@@ -65,10 +69,15 @@ sealed class RandomArray : MonoBehaviour
 
     async Awaitable RunScanAnimationAsync()
     {
-        var deltaAlpha = (1 - LowAlpha) / (Delay * 0.2f);
+        var deltaAlpha = (1 - LowAlpha) / (ScanDelay * 0.2f);
 
         foreach (var cell in _cells)
         {
+            transform.localPosition = cell.transform.localPosition;
+            transform.localScale = cell.transform.localScale;
+
+            await Awaitable.WaitForSecondsAsync(ColorDelay);
+
             var m = cell.GetComponent<MeshRenderer>().material;
             var color = m.color;
 
@@ -79,7 +88,7 @@ sealed class RandomArray : MonoBehaviour
                 await Awaitable.NextFrameAsync();
             }
 
-            await Awaitable.WaitForSecondsAsync(Delay);
+            await Awaitable.WaitForSecondsAsync(ScanDelay);
 
             while (color.a > LowAlpha)
             {
@@ -94,6 +103,12 @@ sealed class RandomArray : MonoBehaviour
     {
         Random.InitState(Seed);
         BuildChart();
-        await RunScanAnimationAsync();
+        while (true) await RunScanAnimationAsync();
+    }
+
+    void Update()
+    {
+        Cursor.localPosition = ExpTween.Step(Cursor.localPosition, transform.localPosition, CursorSpeed);
+        Cursor.localScale = ExpTween.Step(Cursor.localScale, transform.localScale, CursorSpeed);
     }
 }
