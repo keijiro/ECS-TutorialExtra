@@ -442,6 +442,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 105282459675239002, guid: 298eb11dfe58ff6408bfab8ddf773e20, type: 3}
   Cursor: {fileID: 1085246535}
+  Randomize: 1
   Palette:
   - {r: 0.15633422, g: 1, b: 0.52879834, a: 1}
   - {r: 1, g: 0.13746631, b: 0.51025623, a: 1}

@@ -7,6 +7,7 @@ sealed class RandomArray : MonoBehaviour
     [Space]
     [field:SerializeField] public GameObject Prefab = null;
     [field:SerializeField] public Transform Cursor = null;
+    [field:SerializeField] public bool Randomize = true;
     [Space]
     [field:SerializeField] public Color[] Palette = null;
     [field:SerializeField] public float LowAlpha = 0.5f;
@@ -26,7 +27,33 @@ sealed class RandomArray : MonoBehaviour
 
     List<GameObject> _cells = new List<GameObject>();
 
-    void BuildChart()
+    void BuildSequentialChart()
+    {
+        for (var col = 0; col < Palette.Length; col++)
+        {
+            var rows = Random.Range(RowCount / 2, RowCount - col - 1);
+
+            for (var row = 0; row < rows; row += col + 1)
+            {
+                var h = col + 1;
+                var x = col * (1 + Interval.x);
+                var y = CellHeight * (row + 0.5f * h) + 0.5f * Interval.y;
+                var s = CellHeight * h - Interval.y;
+
+                var cell = Instantiate(Prefab);
+                cell.transform.localPosition = new Vector3(x, -y, 0);
+                cell.transform.localScale = new Vector3(1, s, 1);
+
+                var color = Palette[col];
+                color.a = LowAlpha;
+                cell.GetComponent<MeshRenderer>().material.color = color;
+
+                _cells.Add(cell);
+            }
+        }
+    }
+
+    void BuildRandomChart()
     {
         for (var col = 0; col < ColumnCount; col++)
         {
@@ -102,7 +129,7 @@ sealed class RandomArray : MonoBehaviour
     async void Start()
     {
         Random.InitState(Seed);
-        BuildChart();
+        if (Randomize) BuildRandomChart(); else BuildSequentialChart();
         while (true) await RunScanAnimationAsync();
     }
 
